@@ -1,0 +1,217 @@
+diff --git a/common.nix b/common.nix
+index 7858c9a..b31faaf 100644
+--- a/common.nix
++++ b/common.nix
+@@ -6,6 +6,9 @@
+   config,
+   lib,
+   pkgs,
++  inputs,
++  useHm,
++  hmUsername,
+   ...
+ }:
+ 
+@@ -18,25 +21,22 @@ let
+     types
+     ;
+ 
+-  cfg = config.home-manager;
+-
+-  extendedLib = import ../modules/lib/stdlib-extended.nix lib;
++  cfg = config.os.home-manager;
+ 
+   hmModule = types.submoduleWith {
+     description = "Home Manager module";
+     class = "homeManager";
+     specialArgs = {
+-      lib = extendedLib;
+-      osConfig = config;
+-      modulesPath = builtins.toString ../modules;
++      inherit lib;
++      osConfig = config.os;
++      modulesPath = "${inputs.home-manager}/modules";
+     } // cfg.extraSpecialArgs;
+     modules = [
+       (
+         { name, ... }:
+         {
+-          imports = import ../modules/modules.nix {
+-            inherit pkgs;
+-            lib = extendedLib;
++          imports = import "${inputs.home-manager}/modules/modules.nix" {
++            inherit lib pkgs;
+             useNixpkgsModule = !cfg.useGlobalPkgs;
+           };
+ 
+@@ -44,19 +44,19 @@ let
+             submoduleSupport.enable = true;
+             submoduleSupport.externalPackageInstall = cfg.useUserPackages;
+ 
+-            home.username = config.users.users.${name}.name;
+-            home.homeDirectory = config.users.users.${name}.home;
++            home.username = config.os.users.users.${hmUsername}.name;
++            home.homeDirectory = config.os.users.users.${hmUsername}.home;
+ 
+             # Forward `nix.enable` from the OS configuration. The
+             # conditional is to check whether nix-darwin is new enough
+             # to have the `nix.enable` option; it was previously a
+             # `mkRemovedOptionModule` error, which we can crudely detect
+             # by `visible` being set to `false`.
+-            nix.enable = mkIf (options.nix.enable.visible or true) config.nix.enable;
++            nix.enable = config.os.nix.enable;
+ 
+             # Make activation script use same version of Nix as system as a whole.
+             # This avoids problems with Nix not being in PATH.
+-            nix.package = config.nix.package;
++            nix.package = config.os.nix.package;
+           };
+         }
+       )
+@@ -65,7 +65,7 @@ let
+ 
+ in
+ {
+-  options.home-manager = {
++  options.os.home-manager = {
+     useUserPackages = mkEnableOption ''
+       installation of user packages through the
+       {option}`users.users.<name>.packages` option'';
+@@ -105,42 +105,27 @@ in
+     };
+ 
+     verbose = mkEnableOption "verbose output on activation";
++  };
+ 
+-    users = mkOption {
+-      type = types.attrsOf hmModule;
+-      default = { };
+-      # Prevent the entire submodule being included in the documentation.
+-      visible = "shallow";
+-      description = ''
+-        Per-user Home Manager configuration.
+-      '';
+-    };
++  options.hm = mkOption {
++    type = hmModule;
++    default = { };
++    visible = "shallow";
++    description = "Home Manager configuration.";
+   };
+ 
+-  config = (
+-    lib.mkMerge [
+-      # Fix potential recursion when configuring home-manager users based on values in users.users #594
+-      (mkIf (cfg.useUserPackages && cfg.users != { }) {
+-        users.users = (lib.mapAttrs (_username: usercfg: { packages = [ usercfg.home.path ]; }) cfg.users);
+-        environment.pathsToLink = [ "/etc/profile.d" ];
+-      })
+-      (mkIf (cfg.users != { }) {
+-        warnings = lib.flatten (
+-          flip lib.mapAttrsToList cfg.users (
+-            user: config: flip map config.warnings (warning: "${user} profile: ${warning}")
+-          )
+-        );
+-
+-        assertions = lib.flatten (
+-          flip lib.mapAttrsToList cfg.users (
+-            user: config:
+-            flip map config.assertions (assertion: {
+-              inherit (assertion) assertion;
+-              message = "${user} profile: ${assertion.message}";
+-            })
+-          )
+-        );
++  config = mkIf useHm {
++    os = {
++      users.users.${hmUsername}.packages = mkIf cfg.useUserPackages [ config.hm.home.path ];
++      environment.pathsToLink = mkIf cfg.useUserPackages [ "/etc/profile.d" ];
++    };
++
++    warnings = lib.mkOrder 1700 (map (x: "hm: ${x}") config.hm.warnings);
++    assertions = lib.mkOrder 1700 (
++      flip map config.hm.assertions (x: {
++        inherit (x) assertion;
++        message = "hm: ${x.message}";
+       })
+-    ]
+-  );
++    );
++  };
+ }
+diff --git a/default.nix b/default.nix
+index fb9b7fd..06c3410 100644
+--- a/default.nix
++++ b/default.nix
+@@ -3,12 +3,13 @@
+   lib,
+   pkgs,
+   utils,
++  useHm,
+   ...
+ }:
+ 
+ let
+ 
+-  cfg = config.home-manager;
++  cfg = config.os.home-manager;
+ 
+   serviceEnvironment =
+     lib.optionalAttrs (cfg.backupFileExtension != null) {
+@@ -20,10 +21,10 @@ in
+ {
+   imports = [ ./common.nix ];
+ 
+-  config = lib.mkMerge [
++  config.os = lib.mkMerge [
+     {
+       home-manager = {
+-        extraSpecialArgs.nixosConfig = config;
++        extraSpecialArgs.nixosConfig = config.os;
+ 
+         sharedModules = [
+           {
+@@ -32,22 +33,22 @@ in
+             config = {
+               # The per-user directory inside /etc/profiles is not known by
+               # fontconfig by default.
+-              fonts.fontconfig.enable = lib.mkDefault (cfg.useUserPackages && config.fonts.fontconfig.enable);
++              fonts.fontconfig.enable = lib.mkDefault (cfg.useUserPackages && config.os.fonts.fontconfig.enable);
+ 
+               # Inherit glibcLocales setting from NixOS.
+-              i18n.glibcLocales = lib.mkDefault config.i18n.glibcLocales;
++              i18n.glibcLocales = lib.mkDefault config.os.i18n.glibcLocales;
+             };
+           }
+         ];
+       };
+     }
+-    (lib.mkIf (cfg.users != { }) {
+-      systemd.services = lib.mapAttrs' (
+-        _: usercfg:
+-        let
+-          username = usercfg.home.username;
+-        in
+-        lib.nameValuePair "home-manager-${utils.escapeSystemdPath username}" {
++    (lib.mkIf useHm (
++      let
++        usercfg = config.hm;
++        username = usercfg.home.username;
++      in
++      {
++        systemd.services."home-manager-${utils.escapeSystemdPath username}" = {
+           description = "Home Manager environment for ${username}";
+           wantedBy = [ "multi-user.target" ];
+           wants = [ "nix-daemon.socket" ];
+@@ -99,8 +100,8 @@ in
+               in
+               "${setupEnv} ${usercfg.home.activationPackage}";
+           };
+-        }
+-      ) cfg.users;
+-    })
++        };
++      }
++    ))
+   ];
+ }

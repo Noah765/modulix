@@ -1,0 +1,65 @@
+diff --git a/modules.nix b/modules.nix
+index 290b9ce..e974912 100644
+--- a/modules.nix
++++ b/modules.nix
+@@ -587,7 +587,10 @@ let
+           "_file"
+           "key"
+           "disabledModules"
++          "inputs"
+           "imports"
++          "osImports"
++          "hmImports"
+           "options"
+           "config"
+           "meta"
+@@ -602,7 +605,10 @@ let
+           _class = m._class or null;
+           key = toString m.key or key;
+           disabledModules = m.disabledModules or [ ];
++          inputs = m.inputs or { };
+           imports = m.imports or [ ];
++          osImports = m.osImports or [ ];
++          hmImports = m.hmImports or [ ];
+           options = m.options or { };
+           config = addFreeformType (addMeta (m.config or { }));
+         }
+@@ -613,7 +619,10 @@ let
+         _class = m._class or null;
+         key = toString m.key or key;
+         disabledModules = m.disabledModules or [ ];
++        inputs = m.inputs or { };
+         imports = m.require or [ ] ++ m.imports or [ ];
++        osImports = m.osImports or [ ];
++        hmImports = m.hmImports or [ ];
+         options = { };
+         config = addFreeformType (
+           removeAttrs m [
+@@ -621,8 +630,11 @@ let
+             "_file"
+             "key"
+             "disabledModules"
++            "inputs"
+             "require"
+             "imports"
++            "osImports"
++            "hmImports"
+             "freeformType"
+           ]
+         );
+@@ -1951,7 +1963,6 @@ let
+           pushDownProperties
+           unifyModuleSyntax
+           ;
+-        collectModules = collectModules null;
+       };
+ 
+   /**
+@@ -2080,6 +2091,7 @@ private
+   #       are just needed by types.nix, but are not meant to be consumed
+   #       externally.
+   inherit
++    collectModules
+     defaultOrderPriority
+     defaultOverridePriority
+     defaultPriority
