@@ -96,4 +96,5 @@ in ''
     ${prettyPrintAttr 1 "inputs" inputs}
 
     outputs = inputs: inputs.modulix.modulixSystems (import ./config.nix) inputs;
-  }''
+  }
+''
