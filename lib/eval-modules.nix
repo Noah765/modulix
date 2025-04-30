@@ -51,6 +51,7 @@
             };
 
             os = {
+              _class,
               pkgs,
               utils,
               ...
@@ -58,7 +59,7 @@
               options._modulixArgs = mkOption {visible = "hidden";};
 
               config = {
-                _modulixArgs = {inherit pkgs utils;};
+                _modulixArgs = {inherit _class pkgs utils;};
 
                 home-manager = {
                   useGlobalPkgs = true;

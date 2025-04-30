@@ -1,18 +1,18 @@
 diff --git a/common.nix b/common.nix
-index 7858c9a..b31faaf 100644
+index b54ee60..2330c54 100644
 --- a/common.nix
 +++ b/common.nix
-@@ -6,6 +6,9 @@
-   config,
-   lib,
-   pkgs,
+@@ -2,6 +2,9 @@
+ # For OS-specific configuration, please edit nixos/default.nix or nix-darwin/default.nix instead.
+ 
+ {
 +  inputs,
 +  useHm,
 +  hmUsername,
-   ...
- }:
- 
-@@ -18,25 +21,22 @@ let
+   options,
+   config,
+   lib,
+@@ -19,26 +22,23 @@ let
      types
      ;
  
@@ -27,9 +27,11 @@ index 7858c9a..b31faaf 100644
      specialArgs = {
 -      lib = extendedLib;
 -      osConfig = config;
+-      osClass = _class;
 -      modulesPath = builtins.toString ../modules;
 +      inherit lib;
 +      osConfig = config.os;
++      osClass = config.os._modulixArgs._class;
 +      modulesPath = "${inputs.home-manager}/modules";
      } // cfg.extraSpecialArgs;
      modules = [
@@ -44,7 +46,7 @@ index 7858c9a..b31faaf 100644
              useNixpkgsModule = !cfg.useGlobalPkgs;
            };
  
-@@ -44,19 +44,19 @@ let
+@@ -46,19 +46,19 @@ let
              submoduleSupport.enable = true;
              submoduleSupport.externalPackageInstall = cfg.useUserPackages;
  
@@ -68,7 +70,7 @@ index 7858c9a..b31faaf 100644
            };
          }
        )
-@@ -65,7 +65,7 @@ let
+@@ -67,7 +67,7 @@ let
  
  in
  {
@@ -77,7 +79,7 @@ index 7858c9a..b31faaf 100644
      useUserPackages = mkEnableOption ''
        installation of user packages through the
        {option}`users.users.<name>.packages` option'';
-@@ -105,42 +105,27 @@ in
+@@ -107,42 +107,27 @@ in
      };
  
      verbose = mkEnableOption "verbose output on activation";
