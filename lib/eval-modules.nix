@@ -35,8 +35,8 @@
               class = "nixos";
               modules = osModules ++ baseModules;
               specialArgs = {
+                inherit baseModules;
                 modulesPath = "${nixpkgs}/nixos/modules";
-                baseModules = baseModules;
               };
             });
             default = {};
