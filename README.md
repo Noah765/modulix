@@ -172,7 +172,7 @@ There is a need for this generator because nix requires flake inputs to be defin
 You can add `inputs.modulix.packages.${pkgs.system}.mxg` to `os.environment.systemPackages` or `hm.home.packages` to expose the generator directly, or you can create your own rebuild script.
 The Modulix generator should be fast enough that it shouldn't have a noticeable impact on performance if it is run on every rebuild using a rebuild script. Here is a sample rebuild script using the Modulix generator and [nh](https://github.com/nix-community/nh):
 ```nix
-pkgs.writeShellScriptBin "rb" "${lib.getExe inputs.modulix.packages.${pkgs.system}.mxg} && ${lib.getExe pkgs.nh} os $*"
+pkgs.writeShellScriptBin "rb" "${lib.getExe inputs.modulix.packages.${pkgs.system}.mxg} && ${lib.getExe pkgs.nh} os $* /etc/nixos"
 ```
 
 ### Usage
