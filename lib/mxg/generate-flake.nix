@@ -72,6 +72,10 @@
       + "\n${prefix}}"
     else if isString x
     then "\"${x}\""
+    else if x == true
+    then "true"
+    else if x == false
+    then "false"
     else toString x;
   prettyPrintAttr = depth: name: value:
     if isAttrs value && length (attrNames value) == 1
