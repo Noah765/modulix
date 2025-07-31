@@ -144,7 +144,7 @@ index 7807029c..3247a83c 100644
 +  };
  }
 diff --git a/default.nix b/default.nix
-index 25defb1a..30fea780 100644
+index 793b02fa..af11d438 100644
 --- a/default.nix
 +++ b/default.nix
 @@ -3,12 +3,13 @@
@@ -175,7 +175,7 @@ index 25defb1a..30fea780 100644
  
          sharedModules = [
            {
-@@ -32,10 +33,10 @@ in
+@@ -32,23 +33,23 @@ in
              config = {
                # The per-user directory inside /etc/profiles is not known by
                # fontconfig by default.
@@ -185,10 +185,8 @@ index 25defb1a..30fea780 100644
                # Inherit glibcLocales setting from NixOS.
 -              i18n.glibcLocales = lib.mkDefault config.i18n.glibcLocales;
 +              i18n.glibcLocales = lib.mkDefault config.os.i18n.glibcLocales;
- 
-               # Legacy profile management is when the activation script
-               # generates GC root and home-manager profile. The modern way
-@@ -47,14 +48,14 @@ in
+             };
+           }
          ];
        };
      }
@@ -211,7 +209,7 @@ index 25defb1a..30fea780 100644
            description = "Home Manager environment for ${username}";
            wantedBy = [ "multi-user.target" ];
            wants = [ "nix-daemon.socket" ];
-@@ -106,8 +107,8 @@ in
+@@ -100,8 +101,8 @@ in
                in
                "${setupEnv} ${usercfg.home.activationPackage}";
            };
