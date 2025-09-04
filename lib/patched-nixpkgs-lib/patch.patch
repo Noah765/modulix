@@ -1,8 +1,8 @@
 diff --git a/modules.nix b/modules.nix
-index 290b9ce..e974912 100644
+index 3330579952..bd93973164 100644
 --- a/modules.nix
 +++ b/modules.nix
-@@ -587,7 +587,10 @@ let
+@@ -616,7 +616,10 @@
            "_file"
            "key"
            "disabledModules"
@@ -13,7 +13,7 @@ index 290b9ce..e974912 100644
            "options"
            "config"
            "meta"
-@@ -602,7 +605,10 @@ let
+@@ -631,7 +634,10 @@
            _class = m._class or null;
            key = toString m.key or key;
            disabledModules = m.disabledModules or [ ];
@@ -24,7 +24,7 @@ index 290b9ce..e974912 100644
            options = m.options or { };
            config = addFreeformType (addMeta (m.config or { }));
          }
-@@ -613,7 +619,10 @@ let
+@@ -642,7 +648,10 @@
          _class = m._class or null;
          key = toString m.key or key;
          disabledModules = m.disabledModules or [ ];
@@ -35,7 +35,7 @@ index 290b9ce..e974912 100644
          options = { };
          config = addFreeformType (
            removeAttrs m [
-@@ -621,8 +630,11 @@ let
+@@ -650,8 +659,11 @@
              "_file"
              "key"
              "disabledModules"
@@ -47,7 +47,7 @@ index 290b9ce..e974912 100644
              "freeformType"
            ]
          );
-@@ -1951,7 +1963,6 @@ let
+@@ -2027,7 +2039,6 @@
            pushDownProperties
            unifyModuleSyntax
            ;
@@ -55,7 +55,7 @@ index 290b9ce..e974912 100644
        };
  
    /**
-@@ -2080,6 +2091,7 @@ private
+@@ -2161,6 +2172,7 @@
    #       are just needed by types.nix, but are not meant to be consumed
    #       externally.
    inherit

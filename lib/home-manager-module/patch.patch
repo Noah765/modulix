@@ -1,5 +1,5 @@
 diff --git a/common.nix b/common.nix
-index 7807029c..3247a83c 100644
+index f2dec70b5f..f47da3679b 100644
 --- a/common.nix
 +++ b/common.nix
 @@ -2,6 +2,9 @@
@@ -12,7 +12,7 @@ index 7807029c..3247a83c 100644
    options,
    config,
    lib,
-@@ -19,18 +22,16 @@ let
+@@ -19,18 +22,16 @@
      types
      ;
  
@@ -36,7 +36,7 @@ index 7807029c..3247a83c 100644
      }
      // cfg.extraSpecialArgs;
  
-@@ -39,9 +40,8 @@ let
+@@ -39,9 +40,8 @@
          { name, ... }:
          {
            imports =
@@ -48,7 +48,7 @@ index 7807029c..3247a83c 100644
                useNixpkgsModule = !cfg.useGlobalPkgs;
              }
              ++ cfg.sharedModules;
-@@ -50,19 +50,19 @@ let
+@@ -50,19 +50,19 @@
              submoduleSupport.enable = true;
              submoduleSupport.externalPackageInstall = cfg.useUserPackages;
  
@@ -72,7 +72,7 @@ index 7807029c..3247a83c 100644
            };
          }
        )
-@@ -71,7 +71,7 @@ let
+@@ -71,7 +71,7 @@
  
  in
  {
@@ -81,12 +81,11 @@ index 7807029c..3247a83c 100644
      useUserPackages = mkEnableOption ''
        installation of user packages through the
        {option}`users.users.<name>.packages` option'';
-@@ -124,42 +124,27 @@ in
-         the system configuration.
+@@ -127,42 +127,27 @@
+         embedded in the system configuration.
        '';
      };
-+  };
- 
+-
 -    users = mkOption {
 -      type = types.attrsOf hmModule;
 -      default = { };
@@ -95,14 +94,30 @@ index 7807029c..3247a83c 100644
 -      description = ''
 -        Per-user Home Manager configuration.
 -      '';
--    };
++  };
++
 +  options.hm = mkOption {
 +    type = hmModule;
 +    default = { };
 +    visible = "shallow";
 +    description = "Home Manager configuration.";
++  };
++
++  config = mkIf useHm {
++    os = {
++      users.users.${hmUsername}.packages = mkIf cfg.useUserPackages [ config.hm.home.path ];
++      environment.pathsToLink = mkIf cfg.useUserPackages [ "/etc/profile.d" ];
+     };
++
++    warnings = lib.mkOrder 1700 (map (x: "hm: ${x}") config.hm.warnings);
++    assertions = lib.mkOrder 1700 (
++      flip map config.hm.assertions (x: {
++        inherit (x) assertion;
++        message = "hm: ${x.message}";
++      })
++    );
    };
- 
+-
 -  config = (
 -    lib.mkMerge [
 -      # Fix potential recursion when configuring home-manager users based on values in users.users #594
@@ -126,25 +141,12 @@ index 7807029c..3247a83c 100644
 -            })
 -          )
 -        );
-+  config = mkIf useHm {
-+    os = {
-+      users.users.${hmUsername}.packages = mkIf cfg.useUserPackages [ config.hm.home.path ];
-+      environment.pathsToLink = mkIf cfg.useUserPackages [ "/etc/profile.d" ];
-+    };
-+
-+    warnings = lib.mkOrder 1700 (map (x: "hm: ${x}") config.hm.warnings);
-+    assertions = lib.mkOrder 1700 (
-+      flip map config.hm.assertions (x: {
-+        inherit (x) assertion;
-+        message = "hm: ${x.message}";
-       })
+-      })
 -    ]
 -  );
-+    );
-+  };
  }
 diff --git a/default.nix b/default.nix
-index 793b02fa..af11d438 100644
+index 91378683ba..b35c453780 100644
 --- a/default.nix
 +++ b/default.nix
 @@ -3,12 +3,13 @@
@@ -156,13 +158,13 @@ index 793b02fa..af11d438 100644
  }:
  
  let
- 
+   inherit (lib) mkIf;
 -  cfg = config.home-manager;
 +  cfg = config.os.home-manager;
  
-   serviceEnvironment =
-     lib.optionalAttrs (cfg.backupFileExtension != null) {
-@@ -20,10 +21,10 @@ in
+   serviceEnvironment = lib.mkMerge [
+     (mkIf cfg.verbose { VERBOSE = "1"; })
+@@ -23,10 +24,10 @@
  {
    imports = [ ./common.nix ];
  
@@ -175,7 +177,7 @@ index 793b02fa..af11d438 100644
  
          sharedModules = [
            {
-@@ -32,23 +33,23 @@ in
+@@ -35,23 +36,23 @@
              config = {
                # The per-user directory inside /etc/profiles is not known by
                # fontconfig by default.
@@ -190,7 +192,7 @@ index 793b02fa..af11d438 100644
          ];
        };
      }
--    (lib.mkIf (cfg.users != { }) {
+-    (mkIf (cfg.users != { }) {
 -      systemd.services = lib.mapAttrs' (
 -        _: usercfg:
 -        let
@@ -198,7 +200,7 @@ index 793b02fa..af11d438 100644
 -          driverVersion = if cfg.enableLegacyProfileManagement then "0" else "1";
 -        in
 -        lib.nameValuePair "home-manager-${utils.escapeSystemdPath username}" {
-+    (lib.mkIf useHm (
++    (mkIf useHm (
 +      let
 +        usercfg = config.hm;
 +        inherit (usercfg.home) username;
@@ -209,7 +211,7 @@ index 793b02fa..af11d438 100644
            description = "Home Manager environment for ${username}";
            wantedBy = [ "multi-user.target" ];
            wants = [ "nix-daemon.socket" ];
-@@ -100,8 +101,8 @@ in
+@@ -103,8 +104,8 @@
                in
                "${setupEnv} ${usercfg.home.activationPackage}";
            };

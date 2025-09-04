@@ -1,8 +1,8 @@
 diff --git a/top-level.nix b/top-level.nix
-index 75738bc..2229b65 100644
+index b8662e9929..e1b06a8490 100644
 --- a/top-level.nix
 +++ b/top-level.nix
-@@ -93,7 +93,7 @@ let
+@@ -86,7 +86,7 @@
      in
      if replacements == [ ] then
        # Avoid IFD if possible, by sidestepping replaceDependencies if no replacements are specified.
@@ -11,7 +11,7 @@ index 75738bc..2229b65 100644
      else
        (pkgs.replaceDependencies.override {
          replaceDirectDependencies = pkgs.replaceDirectDependencies.override {
-@@ -101,7 +101,7 @@ let
+@@ -94,7 +94,7 @@
          };
        })
          {
@@ -20,7 +20,7 @@ index 75738bc..2229b65 100644
            inherit replacements cutoffPackages;
          };
  
-@@ -118,7 +118,6 @@ in
+@@ -109,7 +109,6 @@
  
  {
    imports = [
@@ -28,7 +28,7 @@ index 75738bc..2229b65 100644
      (mkRemovedOptionModule [
        "nesting"
        "clone"
-@@ -351,7 +350,7 @@ in
+@@ -342,7 +341,7 @@
  
      system.extraSystemBuilderCmds =
        optionalString config.system.copySystemConfiguration ''
