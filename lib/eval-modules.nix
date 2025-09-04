@@ -10,10 +10,11 @@
   lib = import "${home-manager}/modules/lib/stdlib-extended.nix" ((import (import ./patched-nixpkgs-lib pkgs)).extend (import "${nixpkgs}/lib/flake-version-info.nix" nixpkgs));
   inherit (lib) concatMap concatStringsSep evalModules filter flip isPath mkAliasOptionModule mkOption mkOrder showWarnings throwIfNot;
 
-  allModules = lib.modules.collectModules "modulix" "" modules {
-    inherit lib inputs;
-    config = null;
-  };
+  allModules =
+    (lib.modules.collectModules "modulix" "" modules {
+      inherit lib inputs;
+      config = null;
+    }).modules;
   osModules = concatMap (x: x.osImports) allModules;
   hmModules = concatMap (x: x.hmImports) allModules;
 

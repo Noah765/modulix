@@ -14,10 +14,11 @@
   };
 
   directConfigModules = foldlAttrs (modules: _: config: modules ++ config.modules) config.globalModules or [] config.configurations or {};
-  configModules = lib.modules.collectModules "modulix" "" directConfigModules {
-    inherit lib;
-    config = null;
-  };
+  configModules =
+    (lib.modules.collectModules "modulix" "" directConfigModules {
+      inherit lib;
+      config = null;
+    }).modules;
   configInputDefs = flip concatMap configModules (x:
     optional (x ? inputs) {
       file = x._file;
